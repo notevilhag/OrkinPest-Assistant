@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PestPro Assistant 🌿</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Inter',sans-serif; min-height:100vh; background:linear-gradient(180deg,#1b4332 0%,#2d6a4f 40%,#40916c 100%); display:flex; flex-direction:column; align-items:center; color:#fff; overflow:hidden; }
+
+    .header { width:100%; max-width:520px; padding:18px 16px 10px; display:flex; align-items:center; gap:10px; }
+    .header-icon { width:44px; height:44px; border-radius:14px; background:rgba(255,255,255,0.15); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; font-size:23px; flex-shrink:0; }
+    .header-title { font-weight:700; font-size:18px; letter-spacing:-0.4px; }
+    .header-sub { color:rgba(255,255,255,0.55); font-size:11px; margin-top:1px; }
+    .status-dot { width:10px; height:10px; border-radius:50%; background:#74c69d; box-shadow:0 0 8px #74c69d; flex-shrink:0; }
+
+    .lang-toggle { display:flex; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.18); border-radius:18px; padding:3px; margin-left:auto; flex-shrink:0; }
+    .lang-btn { background:none; border:none; color:rgba(255,255,255,0.55); font-size:12px; font-weight:600; font-family:inherit; padding:4px 10px; border-radius:14px; cursor:pointer; transition:all .2s; white-space:nowrap; }
+    .lang-btn.active { background:rgba(255,255,255,0.25); color:#fff; }
+    .lang-btn:hover:not(.active) { color:rgba(255,255,255,0.8); }
+
+    .chat-area { width:100%; max-width:520px; flex:1; overflow-y:auto; padding:4px 16px 10px; display:flex; flex-direction:column; gap:12px; min-height:0; }
+    .chat-area::-webkit-scrollbar { width:5px; }
+    .chat-area::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.22); border-radius:3px; }
+
+    .msg-row { display:flex; gap:9px; align-items:flex-end; animation:fadeIn .28s ease; }
+    .msg-row.user { flex-direction:row-reverse; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(7px)} to{opacity:1;transform:translateY(0)} }
+
+    .avatar { width:33px; height:33px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; box-shadow:0 2px 5px rgba(0,0,0,0.15); }
+    .avatar.bot  { background:linear-gradient(135deg,#2d6a4f,#40916c); }
+    .avatar.user { background:linear-gradient(135deg,#74c69d,#b7e4c7); }
+
+    .bubble { max-width:80%; padding:9px 13px; font-size:14px; line-height:1.5; box-shadow:0 2px 7px rgba(0,0,0,0.1); word-break:break-word; }
+    .bubble.bot  { background:#fff; color:#2c3e50; border-radius:17px 17px 17px 4px; }
+    .bubble.bot strong { color:#2d6a4f; }
+    .bubble.bot .warn { background:#fff3cd; color:#856404; border-radius:7px; padding:5px 9px; margin-top:5px; font-size:13px; display:block; }
+    .bubble.user { background:linear-gradient(135deg,#52b788,#40916c); color:#fff; border-radius:17px 17px 4px 17px; }
+
+    .typing-bubble { background:#fff; border-radius:17px 17px 17px 4px; padding:11px 15px; height:42px; display:flex; gap:4px; align-items:center; box-shadow:0 2px 7px rgba(0,0,0,0.08); }
+    .typing-dot { width:7px; height:7px; border-radius:50%; background:#40916c; animation:bounce 1.2s ease-in-out infinite; }
+    .typing-dot:nth-child(2){animation-delay:.2s} .typing-dot:nth-child(3){animation-delay:.4s}
+    @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+
+    .quick-row { width:100%; max-width:520px; padding:6px 16px 3px; display:flex; gap:7px; overflow-x:auto; scrollbar-width:none; }
+    .quick-row::-webkit-scrollbar{display:none}
+    .quick-btn { background:rgba(255,255,255,0.11); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:18px; padding:6px 13px; font-size:13px; font-family:inherit; cursor:pointer; white-space:nowrap; backdrop-filter:blur(4px); transition:background .2s; flex-shrink:0; }
+    .quick-btn:hover{background:rgba(255,255,255,0.2)} .quick-btn:disabled{opacity:.45;cursor:default}
+
+    .input-area { width:100%; max-width:520px; padding:8px 16px 22px; display:flex; gap:9px; align-items:flex-end; }
+    .input-area textarea { flex:1; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.23); border-radius:19px; padding:11px 17px; color:#fff; font-size:14px; font-family:inherit; resize:none; backdrop-filter:blur(4px); max-height:96px; min-height:44px; line-height:1.45; }
+    .input-area textarea::placeholder{color:rgba(255,255,255,0.48)} .input-area textarea:focus{outline:none;border-color:rgba(255,255,255,0.48)}
+    .send-btn { width:44px; height:44px; border-radius:50%; border:none; color:#fff; font-size:19px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 7px rgba(0,0,0,0.2); transition:all .2s; flex-shrink:0; cursor:pointer; background:linear-gradient(135deg,#74c69d,#52b788); }
+    .send-btn:hover{transform:scale(1.06)} .send-btn:disabled{background:rgba(255,255,255,0.14);cursor:default;transform:none;box-shadow:none}
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-icon">🌿</div>
+  <div>
+    <div class="header-title" id="headerTitle">PestPro Assistant</div>
+    <div class="header-sub"  id="headerSub">Pest ID &amp; Control · Georgia 🇬🇪</div>
+  </div>
+  <div class="lang-toggle">
+    <button class="lang-btn active" id="btnEN" onclick="setLang('en')">EN</button>
+    <button class="lang-btn"        id="btnKA" onclick="setLang('ka')">🇬🇪 ქართ</button>
+  </div>
+  <div class="status-dot" id="statusDot"></div>
+</div>
+
+<!-- Chat -->
+<div class="chat-area" id="chatArea"></div>
+<!-- Quick Prompts -->
+<div class="quick-row" id="quickRow"></div>
+<!-- Input -->
+<div class="input-area">
+  <textarea id="msgInput" placeholder="Describe the pest or ask a question..." rows="1"
+            onkeydown="if(event.key==='Enter'&amp;&amp;!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+  <button class="send-btn" id="sendBtn" onclick="sendMessage()">&#10148;</button>
+</div>
+
+<script>
+/* ═══ KNOWLEDGE BASE ═══ */
+const KNOWLEDGE = `
+─── IDENTIFICATION ───
+Cockroaches – Oriental: ~25mm dark-brown flat oval, damp basements/bathrooms. German: ~15mm lighter brown, two dark stripes, kitchens. Signs: dark rice-sized droppings, egg cases, oily smell.
+Bed Bugs – 4-5mm apple-seed shape, reddish-brown, flat unfed. Mattress seams, bed frames, baseboards. Signs: blood spots, shed skins, sweet smell.
+Termites – Workers: pale 3-5mm soft-bodied no waist. Signs: mud tubes, hollow wood, sawdust frass, blistered paint. Subterranean type most common in Georgia.
+Ants – Black garden: 3-5mm shiny black. Pharaoh: 1.5-2mm yellow-orange. Carpenter: 6-12mm, nests in wood. Signs: trails, mounds, alate wings in spring.
+Mosquitoes – 3-6mm thin-legged. Peak Jun-Sep. Breed in standing water.
+Wasps & Hornets – Wasps: 12-18mm yellow-black sting repeatedly. Hornets: 25-35mm brown/yellow very aggressive. ⚠️ Hornets can cause fatal allergic reactions.
+Spiders – Most harmless. Dangerous: Karakurt (shiny black, red belly) ⚠️ VENOMOUS. Brown recluse-like (violin mark) ⚠️ VENOMOUS tissue damage. Harmless: wolf spiders, cellar spiders.
+Rodents – House mouse: 7-10cm light brown large ears. Brown rat: 25-30cm grey-brown burrows. Black rat: 20-25cm dark climbs attics. Signs: droppings, gnaw marks, nests.
+Stored Product Pests – Grain weevil: 3-4mm brown snout in grain. Indian meal moth: 10-15mm wingspan, larvae web in stored food.
+Other – Silverfish: 12-15mm silvery 3 tails loves humidity. Fleas: 2-3mm jumping reddish-brown. Ticks: 1-8mm 8 legs attach to skin ⚠️ Lyme disease risk. Moles: underground damages lawns. Clothes moths: 6-8mm beige larvae eat wool.
+
+─── TREATMENT & CONTROL ───
+Cockroaches – Gel baits best for German (small dots near activity). Boric acid powder thin lines along baseboards. Insecticide spray for knock-down. Sanitation critical: seal food, fix leaks, remove clutter.
+Bed Bugs – Heat treatment 55°C+ professional only. Bed-bug-specific insecticide on seams/frames. Mattress encasements after treatment. Repeat 2-3 rounds 1 week apart — essential.
+Termites – Soil termiticide trench (chlorpyrifos, bifenthrin). Bait systems in ground. Wood injection foam/liquid. Prevention: dry wood away from soil.
+Ants – Bait stations best (days to work). Spray kills contact only. Seal entry points with caulk. Remove food sources.
+Mosquitoes – Eliminate standing water. BTI larvicide in undrained water. Residual spray on resting walls. Fogging sparingly for large areas.
+Wasps & Hornets – Small nests at night: long-range spray. Large nests or hornets: PROFESSIONAL ONLY. Seal entry after removal.
+Spiders – Harmless: clear clutter, seal cracks. Venomous: professional insecticide. ⚠️ Suspected venomous bite: immediate medical attention.
+Rodents – Snap traps along walls for mice. Tamper-proof bait boxes with rodenticide (brodifacoum, difethialone). Seal 6mm+ gaps with steel wool and caulk. Rats need more stations in deeper spots.
+Stored Products – Dispose infested products. Clean shelves with disinfectant. Residual spray in empty storage. Airtight containers. Pheromone traps for monitoring.
+Silverfish – Reduce humidity, fix leaks, spray corners, boric acid line.
+Fleas – Treat pet first (vet). Vacuum carpets. Spray carpets with flea insecticide. Wash bedding hot. Repeat 3 rounds.
+Ticks – Tweezers close to skin, no twist. Lawn acaricide in spring. ⚠️ Advise medical check if bitten.
+
+─── SAFETY ───
+Always gloves + mask. Read labels: rate, PPE, re-entry time. Rodenticides in tamper-proof boxes only. Notify occupants. Follow Georgian regulations. Store locked ventilated away from food. Skin/ingestion contact: call 112 immediately.
+
+─── GEORGIA SEASONALITY ───
+Spring (Mar-May): Ants surge, wasp queens, moles. Summer (Jun-Aug): Peak mosquitoes, wasp nests, ticks. Autumn (Sep-Nov): Hornets aggressive, rodents indoors, stored pests. Winter (Dec-Feb): Cockroach/rodent indoor activity up, bed bugs year-round.
+
+─── GEORGIA REGIONS ───
+Black Sea Coast (Batumi, Adjara, Imereti): humidity → cockroaches, silverfish. Kartli/Kakheti (Tbilisi): drier → stored pests, rodents, moles. Mountains (Svaneti, Tusheti): cooler → fewer tropical pests. Urban Tbilisi: all urban pests.
+`;
+
+/* ═══ i18n ═══ */
+const i18n = {
+  en: {
+    headerTitle: "PestPro Assistant",
+    headerSub: "Pest ID & Control · Georgia 🇬🇪",
+    placeholder: "Describe the pest or ask a question...",
+    welcome: "👋 Sali! I'm **PestPro Assistant** — your pest ID & control helper for Georgia.\n\nI can help you:\n• **Identify** pests from descriptions\n• **Choose treatments** & products\n• **Safety tips** & application guides\n• **Prevention** strategies\n\nDescribe what you see or tap a prompt! 🌿",
+    langInstr: "Respond in English.",
+    switchMsg: "🔄 **Switched to English.** Keep chatting!",
+    quickPrompts: [
+      { label: "🪲 Small brown bugs",   text: "I see small brown bugs near wooden furniture, about 2-3mm. What could they be?" },
+      { label: "🐀 Rodent signs",       text: "Found dark droppings and chew marks near the kitchen baseboard. What rodent and how to treat?" },
+      { label: "🕷️ Spider check",       text: "Dark spider with a light marking on its back in a Tbilisi basement. Dangerous?" },
+      { label: "🐜 Ant trail",          text: "Long trail of tiny black ants from garden to kitchen. How to ID and eliminate?" },
+      { label: "🐝 Wasp nest",          text: "Wasp nest under the roof eaves. How to handle safely?" },
+      { label: "🛡️ How to treat?",      text: "Walk me through the steps for treating a cockroach infestation." },
+    ],
+  },
+  ka: {
+    headerTitle: "PestPro ასესტენტი",
+    headerSub: "Pest ID & Control · საქართველო 🇬🇪",
+    placeholder: "Pest შეცვალეთ...",
+    welcome: "👋 სალი! PestPro ასესტენტი — AI pest ID & control helper.\n\nშემი can help:\n• **Identify** pests\n• **Treatments** & products\n• **Safety** tips\n• **Prevention** strategies\n\nDescribe what you see or tap a quick prompt! 🌿",
+    langInstr: "Respond entirely in Georgian (ქართული). Use Georgian script for ALL text. Do not use English.",
+    switchMsg: "🔄 **ქართული.** Keep chatting!",
+    quickPrompts: [
+      { label: "🪲 გ Bugs",       text: "I see small brown bugs near wooden furniture, 2-3mm. What are they? Respond in Georgian." },
+      { label: "🐀 ლ Rodent",     text: "Found droppings and chew marks. Rodent type and treatment? Respond in Georgian." },
+      { label: "🕷️ ბ Spider",     text: "Dark spider with light marking in Tbilisi basement. Dangerous? Respond in Georgian." },
+      { label: "🐜 ა Ants",       text: "Black ants from garden to kitchen. Identify and treat? Respond in Georgian." },
+      { label: "🐝 ა Wasp",       text: "Wasp nest under roof. Safe handling? Respond in Georgian." },
+      { label: "🛡️ ა Treat?",     text: "Steps for cockroach treatment? Respond in Georgian." },
+    ],
+  }
+};
+
+/* ═══ STATE ═══ */
+let messages = [], loading = false, lang = "en";
+
+/* ═══ SYSTEM PROMPT ═══ */
+function buildSystemPrompt() {
+  return `You are PestPro Assistant, an expert AI for pest control technicians in Georgia (Caucasus).
+
+LANGUAGE: ${i18n[lang].langInstr}
+
+CAPABILITIES:
+1. IDENTIFY pests from descriptions — rank by probability.
+2. ADVISE treatments, products, application steps.
+3. EXPLAIN biology, lifecycle, behavior, seasonality.
+4. GUIDE safety, chemical handling, regulations.
+5. HELP with prevention.
+
+RULES:
+- Concise & action-oriented — technicians are in the field.
+- Ask for details if unsure (color, size, location, season, region).
+- Flag dangerous pests with ⚠️.
+- Simple language unless scientific detail requested.
+- Mention real product types: bifenthrin, chlorpyrifos, boric acid, brodifacoum, BTI, etc.
+
+KNOWLEDGE BASE:
+${KNOWLEDGE}`;
+}
+
+/* ═══ INIT ═══ */
+(function(){
+  renderQuickPrompts();
+  applyUI();
+  appendMessage("assistant", i18n[lang].welcome);
+})();
+
+/* ═══ LANGUAGE ═══ */
+function setLang(l){
+  lang = l;
+  document.getElementById("btnEN").className = "lang-btn" + (l === "en" ? " active" : "");
+  document.getElementById("btnKA").className = "lang-btn" + (l === "ka" ? " active" : "");
+  applyUI();
+  renderQuickPrompts();
+  if (messages.length > 0) appendMessage("assistant", i18n[lang].switchMsg);
+}
+function applyUI(){
+  const t = i18n[lang];
+  document.getElementById("headerTitle").textContent = t.headerTitle;
+  document.getElementById("headerSub").textContent   = t.headerSub;
+  document.getElementById("msgInput").placeholder    = t.placeholder;
+}
+function renderQuickPrompts(){
+  const row = document.getElementById("quickRow");
+  row.innerHTML = "";
+  i18n[lang].quickPrompts.forEach(p => {
+    const btn = document.createElement("button");
+    btn.className   = "quick-btn";
+    btn.textContent = p.label;
+    btn.onclick     = () => sendMessage(p.text);
+    row.appendChild(btn);
+  });
+}
+
+/* ═══ MESSAGES ═══ */
+function appendMessage(role, content){ messages.push({role, content}); renderMessages(); }
+
+function renderMessages(){
+  const area = document.getElementById("chatArea");
+  area.innerHTML = "";
+  messages.forEach(m => area.appendChild(buildMsgNode(m.role, m.content)));
+  if (loading) area.appendChild(buildTypingNode());
+  area.scrollTop = area.scrollHeight;
+}
+
+function buildMsgNode(role, content){
+  const row = document.createElement("div");
+  row.className = "msg-row" + (role === "user" ? " user" : "");
+  const av  = document.createElement("div");
+  av.className  = "avatar " + (role === "user" ? "user" : "bot");
+  av.textContent = role === "user" ? "👤" : "🌿";
+  const bub = document.createElement("div");
+  bub.className = "bubble " + (role === "user" ? "user" : "bot");
+  bub.innerHTML = role === "user" ? escapeHtml(content) : renderMarkdown(content);
+  row.appendChild(av);
+  row.appendChild(bub);
+  return row;
+}
+
+function buildTypingNode(){
+  const row = document.createElement("div");
+  row.className = "msg-row";
+  const av  = document.createElement("div");
+  av.className  = "avatar bot";
+  av.textContent = "🌿";
+  const bub = document.createElement("div");
+  bub.className = "typing-bubble";
+  bub.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  row.appendChild(av);
+  row.appendChild(bub);
+  return row;
+}
+
+/* ═══ SEND — calls OUR proxy, not Anthropic directly ═══ */
+async function sendMessage(overrideText){
+  const ta   = document.getElementById("msgInput");
+  const text = (overrideText || ta.value).trim();
+  if (!text || loading) return;
+  ta.value = "";
+  appendMessage("user", text);
+  setLoading(true);
+
+  try {
+    // ── hits /api/chat.js on the SAME Vercel domain ──
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model:      "claude-sonnet-4-20250514",
+        max_tokens: 1200,
+        system:     buildSystemPrompt(),
+        messages:   messages.map(m => ({ role: m.role, content: m.content }))
+      })
+    });
+
+    if (!res.ok) {
+      const e = await res.json();
+      throw new Error(e.error?.message || "Server error");
+    }
+
+    const data  = await res.json();
+    const reply = data.content?.map(b => b.text || "").join("\n") || "Sorry, no response.";
+    appendMessage("assistant", reply);
+
+  } catch (err) {
+    console.error(err);
+    appendMessage("assistant", "⚠️ **Error:** " + (err.message || "Something went wrong. Try again."));
+  }
+
+  setLoading(false);
+}
+
+/* ═══ LOADING ═══ */
+function setLoading(val){
+  loading = val;
+  document.getElementById("sendBtn").disabled = val;
+  const d = document.getElementById("statusDot");
+  d.style.background  = val ? "#f4a261" : "#74c69d";
+  d.style.boxShadow   = val ? "0 0 8px #f4a261" : "0 0 8px #74c69d";
+  document.querySelectorAll(".quick-btn").forEach(b => b.disabled = val);
+  renderMessages();
+}
+
+/* ═══ HELPERS ═══ */
+function escapeHtml(s){
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>");
+}
+function renderMarkdown(text){
+  text = text.replace(/^[•\-\*]\s(.+)$/gm, '<span style="display:block;padding-left:15px;position:relative;margin:2px 0"><span style="position:absolute;left:0;color:#40916c">•</span>$1</span>');
+  text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/(⚠️[^\n<]+)/g, '<span class="warn">$1</span>');
+  text = text.replace(/\n/g, '<br>');
+  return text;
+}
+</script>
+</body>
+</html>
